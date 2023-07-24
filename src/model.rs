@@ -1,18 +1,18 @@
-use anyhow::anyhow;
-use std::fmt::Formatter;
-use std::str::FromStr;
+use crate::job::Job;
 
-#[derive(Debug, Clone, Copy)]
-pub enum Town {
+/*#[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
+pub enum Commune {
     Guerande,
+    Vallet,
     SaintNazaire,
 }
 
-impl std::fmt::Display for Town {
+impl std::fmt::Display for Commune {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", heck::AsKebabCase(format!("{self:?}")))
     }
-}
+}*/
 
 #[derive(Debug, Clone)]
 pub struct Farmer {
@@ -20,53 +20,24 @@ pub struct Farmer {
     pub label: String,
     pub address: String,
     pub job: Job,
+    pub coord: Option<Coord>,
 }
 
-#[derive(Clone, Copy)]
-pub enum Job {
-    ElevageChevaux,
-    ElevageAutresBovinsEtBuffles,
-    ElevageVacheLaitiere,
-    CultureElevageAssocies,
-    ElevageAutresAnimaux,
-    ElevageOvinsCaprins,
-    CultureCerealesLegumineusesGrainesOleagineuses,
-}
+impl Farmer {
+    pub fn name(&self) -> String {
+        self.title.clone()
+    }
 
-impl FromStr for Job {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> anyhow::Result<Self> {
-        match s {
-            "Élevage de chevaux et d'autres équidés" => Ok(Self::ElevageChevaux),
-            "Élevage d'autres bovins et de buffles" => Ok(Self::ElevageAutresBovinsEtBuffles),
-            "Élevage de vaches laitières" => Ok(Self::ElevageVacheLaitiere),
-            "Culture et élevage associés" => Ok(Self::CultureElevageAssocies),
-            "Élevage d'autres animaux" => Ok(Self::ElevageAutresAnimaux),
-            "Élevage d'ovins et de caprins" => Ok(Self::ElevageOvinsCaprins),
-            "Culture de céréales (à l'exception du riz), de légumineuses et de graines oléagineuses" => Ok(Self::CultureCerealesLegumineusesGrainesOleagineuses),
-            _ => Err(anyhow!("Unknown job '{s}'")),
-        }
+    pub fn description(&self) -> String {
+        format!(
+            "Name: {}\nJob: {}\nAddress: {}",
+            self.title, self.label, self.address
+        )
     }
 }
 
-impl std::fmt::Debug for Job {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let job = match self {
-            Job::ElevageChevaux => "Élevage de chevaux et d'autres équidés",
-            Job::ElevageAutresBovinsEtBuffles =>"Élevage d'autres bovins et de buffles",
-            Job::ElevageVacheLaitiere =>"Élevage de vaches laitières",
-            Job::CultureElevageAssocies =>"Culture et élevage associés",
-            Job::ElevageAutresAnimaux =>"Élevage d'autres animaux",
-            Job::ElevageOvinsCaprins =>"Élevage d'ovins et de caprins",
-            Job::CultureCerealesLegumineusesGrainesOleagineuses =>"Culture de céréales (à l'exception du riz), de légumineuses et de graines oléagineuses",
-        };
-        write!(f, "{job}")
-    }
-}
-
-impl std::fmt::Display for Job {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self:?}")
-    }
+#[derive(Clone, Copy, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
+pub struct Coord {
+    pub x: f64,
+    pub y: f64,
 }

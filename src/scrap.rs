@@ -1,10 +1,13 @@
-use crate::model::{Farmer, Job};
+use crate::job::Job;
+use crate::model::Farmer;
 use anyhow::anyhow;
 use scraper::{ElementRef, Selector};
 
 pub fn scrap_farmer(html: String) -> anyhow::Result<Vec<Farmer>> {
     let document = scraper::html::Html::parse_document(&html);
     let html = document.root_element();
+
+    let mut farmers = vec![];
 
     let annonce = Selector::parse("div.annonce_content").unwrap();
     let annonce_mh = Selector::parse("ul.annonce_mh").unwrap();
@@ -18,16 +21,17 @@ pub fn scrap_farmer(html: String) -> anyhow::Result<Vec<Farmer>> {
         for (job, annonce_mh) in jobs.zip(annonce_mh) {
             for annonce in annonce_mh.select(&annonce) {
                 if let Ok(j) = job.inner_html().parse::<Job>() {
-                    println!("> {:?}", parse_annonce(&annonce, &j)?);
+                    let farmer = parse_annonce(&annonce, &j)?;
+                    farmers.push(farmer);
                 }
             }
         }
     }
 
-    Ok(vec![])
+    Ok(farmers)
 }
 
-fn parse_annonce(element: &ElementRef, job: &Job) -> anyhow::Result<Farmer> {
+fn parse_annonce(element: &ElementRef<'_>, job: &Job) -> anyhow::Result<Farmer> {
     let title = Selector::parse("div.annonce_titre").unwrap();
     let title = element
         .select(&title)
@@ -61,6 +65,7 @@ fn parse_annonce(element: &ElementRef, job: &Job) -> anyhow::Result<Farmer> {
         title,
         label,
         address,
-        job: job.clone(),
+        job: *job,
+        coord: None,
     })
 }
