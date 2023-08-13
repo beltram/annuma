@@ -9,16 +9,26 @@ pub fn scrap_farmer(html: String) -> anyhow::Result<Vec<Farmer>> {
 
     let mut farmers = vec![];
 
-    let annonce = Selector::parse("div.annonce_content").unwrap();
-    let annonce_mh = Selector::parse("ul.annonce_mh").unwrap();
-    let category_selector = Selector::parse("div.h2div").unwrap();
-    let job_selector = Selector::parse("h3").unwrap();
+    let category_selector = Selector::parse("div.h2div").map_err(|_| anyhow!("Parsing error"))?;
+    let job_h3_selector = Selector::parse("h3").map_err(|_| anyhow!("Parsing error"))?;
+    let job_h4_selector = Selector::parse("h4").map_err(|_| anyhow!("Parsing error"))?;
+    let annonce_mh = Selector::parse("ul.annonce_mh").map_err(|_| anyhow!("Parsing error"))?;
+    let annonce = Selector::parse("div.annonce_content").map_err(|_| anyhow!("Parsing error"))?;
 
     for category in html.select(&category_selector) {
-        let jobs = category.select(&job_selector);
+        let jobs_h3 = category.select(&job_h3_selector);
+        let jobs_h4 = category.select(&job_h4_selector);
         let annonce_mh = category.select(&annonce_mh);
 
-        for (job, annonce_mh) in jobs.zip(annonce_mh) {
+        for (job, annonce_mh) in jobs_h3.zip(annonce_mh.clone()) {
+            for annonce in annonce_mh.select(&annonce) {
+                if let Ok(j) = job.inner_html().parse::<Job>() {
+                    let farmer = parse_annonce(&annonce, &j)?;
+                    farmers.push(farmer);
+                }
+            }
+        }
+        for (job, annonce_mh) in jobs_h4.zip(annonce_mh) {
             for annonce in annonce_mh.select(&annonce) {
                 if let Ok(j) = job.inner_html().parse::<Job>() {
                     let farmer = parse_annonce(&annonce, &j)?;

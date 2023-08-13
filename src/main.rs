@@ -67,7 +67,7 @@ async fn my_map(department: Department) -> anyhow::Result<()> {
 
     tokio::time::sleep(core::time::Duration::from_secs(2)).await;
 
-    webbrowser::open("https://www.google.com/maps/d/u/0/home")?;
+    // webbrowser::open("https://www.google.com/maps/d/u/0/home")?;
 
     Ok(())
 }
