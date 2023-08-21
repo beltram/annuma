@@ -22,5 +22,6 @@ pub async fn find_geocode(address: &str) -> anyhow::Result<Option<Coord>> {
     if let Some(coord) = coords.first() {
         return Ok(Some(*coord));
     }
+    println!("Could not geocode {address}");
     Ok(None)
 }

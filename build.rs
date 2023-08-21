@@ -139,14 +139,15 @@ impl Commune {
     fn sanitize_french(s: &str) -> String {
         s.chars()
             .map(|c| match c {
-                'à' | 'â' | 'ä' => 'a',
-                'è' | 'é' | 'ê' | 'ë' => 'e',
-                'î' | 'ï' => 'u',
-                'ô' | 'ö' | 'œ' => 'u',
-                'û' | 'ü' | 'ù' => 'u',
-                'ÿ' => 'y',
-                'ç' => 'c',
-                _ => c,
+                'à' | 'â' | 'ä' => "a".to_string(),
+                'è' | 'é' | 'ê' | 'ë' => "e".to_string(),
+                'î' | 'ï' => "u".to_string(),
+                'ô' | 'ö' => "o".to_string(),
+                'œ' => "oe".to_string(),
+                'û' | 'ü' | 'ù' => "u".to_string(),
+                'ÿ' => "y".to_string(),
+                'ç' => "c".to_string(),
+                _ => c.to_string(),
             })
             .join("")
     }

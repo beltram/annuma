@@ -13,11 +13,12 @@ fn build_uri(commune: &impl std::fmt::Display, departement: u32) -> anyhow::Resu
 
 pub async fn find_farmer(
     commune: &impl std::fmt::Display,
-    departement: u32,
+    departement_number: u32,
+    departement_name: String,
     only_jobs: Option<Vec<Job>>,
     exclude_jobs: Option<Vec<Job>>,
 ) -> anyhow::Result<Vec<Farmer>> {
-    let response = reqwest::get(build_uri(commune, departement)?).await?;
+    let response = reqwest::get(build_uri(commune, departement_number)?).await?;
     let html = response.text().await?;
     let farmers = scrap_farmer(html)?;
 
@@ -36,7 +37,9 @@ pub async fn find_farmer(
     };
 
     for f in farmers.iter_mut() {
-        f.address = format!("{}, {commune}", &f.address);
+        let addr = &f.address;
+        f.address = format!("{departement_name}, {commune}, {addr}");
+        // f.address = format!("{addr}");
     }
 
     Ok(farmers)

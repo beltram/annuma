@@ -35,7 +35,14 @@ async fn my_map(department: Department) -> anyhow::Result<()> {
     let mut spinner = spinner::new_spinner(&department, &commune);
     tokio::time::sleep(core::time::Duration::from_secs(1)).await;
 
-    let farmers = find_farmer(&commune, department.number(), None, None).await?;
+    let farmers = find_farmer(
+        &commune,
+        department.number(),
+        format!("{department}"),
+        None,
+        None,
+    )
+    .await?;
 
     let farmers_size = farmers.len();
 
@@ -60,14 +67,16 @@ async fn my_map(department: Department) -> anyhow::Result<()> {
     create_klm(&path, &commune, farmers)?;
 
     let fullpath = std::fs::canonicalize(path)?;
+    // spinner.success(&format!("Finished 🎊",));
+
     spinner.success(&format!(
         "Finished 🎊\nNow redirecting you to MyMaps to import {}",
         style(format!("{fullpath:?}")).cyan()
     ));
 
-    tokio::time::sleep(core::time::Duration::from_secs(2)).await;
+    // tokio::time::sleep(core::time::Duration::from_secs(2)).await;
 
-    webbrowser::open("https://www.google.com/maps/d/u/0/home")?;
+    // webbrowser::open("https://www.google.com/maps/d/u/0/home")?;
 
     Ok(())
 }
