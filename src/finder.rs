@@ -45,7 +45,13 @@ pub async fn find_farmer(
     Ok(farmers)
 }
 
-pub async fn geocode_farmers(farmers: Vec<Farmer>, s: &mut Spinner) -> anyhow::Result<Vec<Farmer>> {
+pub async fn geocode_farmers(
+    farmers: Vec<Farmer>,
+    s: &mut Spinner,
+    commune: &str,
+    dept_name: &str,
+    code_postal: &str,
+) -> anyhow::Result<Vec<Farmer>> {
     use futures::stream::{StreamExt as _, TryStreamExt as _};
 
     let n = farmers.len();
@@ -53,7 +59,10 @@ pub async fn geocode_farmers(farmers: Vec<Farmer>, s: &mut Spinner) -> anyhow::R
     let parallel = usize::MAX;
     let s = Arc::new(Mutex::new(s));
     let farmers = futures_util::stream::iter(farmers.into_iter().map(|mut f| async {
-        f.coord = find_geocode(&f.address).await.ok().flatten();
+        f.coord = find_geocode(&f.address, commune, dept_name, code_postal)
+            .await
+            .ok()
+            .flatten();
         if let Some((mut s, mut i)) = s.lock().ok().zip(i.lock().ok()) {
             *i += 1;
             s.update_text(format!(

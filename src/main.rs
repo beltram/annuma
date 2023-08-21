@@ -49,7 +49,7 @@ async fn my_map(department: Department) -> anyhow::Result<()> {
     if farmers_size == 0 {
         spinner.fail(&format!(
             "Could not find any farmer in {}",
-            style(commune).cyan()
+            style(&commune).cyan()
         ));
         return Err(anyhow!(""));
     }
@@ -59,9 +59,18 @@ async fn my_map(department: Department) -> anyhow::Result<()> {
         style(farmers_size).cyan()
     ));
 
-    let farmers = geocode_farmers(farmers, &mut spinner).await?;
+    let dept_name = format!("{department}");
+    let code_postal = department.code_postal().to_string();
+    let farmers = geocode_farmers(
+        farmers,
+        &mut spinner,
+        commune.to_string().as_str(),
+        dept_name.as_str(),
+        code_postal.as_str(),
+    )
+    .await?;
 
-    let filename = format!("{commune}.kml");
+    let filename = format!("{}-{commune}.kml", department.number());
     let path = PathBuf::from(&filename);
     std::fs::File::create(&path)?;
     create_klm(&path, &commune, farmers)?;

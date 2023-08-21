@@ -5,7 +5,7 @@ use std::str::FromStr;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=communes-departement-region.csv");
 
-    let csv_path = "communes-departement-region.csv";
+    let csv_path = "slim-communes-departement-region.csv";
     let dept_out_file = "src/cli/department.rs";
 
     let mut reader = csv::Reader::from_path(csv_path)?;
@@ -22,6 +22,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut quote_communes = vec![];
     let mut quote_impl_number = vec![];
     let mut quote_impl_commune = vec![];
+    let mut quote_impl_code_postal = vec![];
 
     let quote_dept =
         departements
@@ -31,16 +32,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if !dept.is_empty() {
                     let departement = hygiene(&dept);
 
-                    let communes = c
-                        .into_iter()
+                    let raw_communes = c.into_iter().unique().collect::<Vec<Commune>>();
+
+                    let communes = raw_communes
+                        .iter()
                         .map(|c| heck::AsUpperCamelCase(&c.name).to_string())
                         .unique()
                         .map(|name| {
                             let n = hygiene(&name);
                             // #[clap(about = #name)]
-                            quote! {
-                                #n
-                            }
+                            quote! { #n }
+                        })
+                        .collect::<Vec<_>>();
+
+                    let codes_postaux = raw_communes
+                        .iter()
+                        .map(|c| {
+                            (
+                                heck::AsUpperCamelCase(&c.name).to_string(),
+                                c.code_postal.clone(),
+                            )
+                        })
+                        .map(|(cn, cp)| {
+                            let cn = hygiene(&cn);
+                            quote! { Self::#cn => #cp }
                         })
                         .collect::<Vec<_>>();
 
@@ -49,6 +64,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         pub enum #departement {
                             #(#communes),*
                         }
+
+                        impl CommuneExt for #departement {
+                            fn code_postal(&self) -> &'static str {
+                                match self {
+                                    #(#codes_postaux),*
+                                }
+                            }
+                        }
                     });
 
                     quote_impl_number.push(quote! {
@@ -56,6 +79,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     });
                     quote_impl_commune.push(quote! {
                         Department::#departement { commune } => Box::new(commune)
+                    });
+                    quote_impl_code_postal.push(quote! {
+                        Department::#departement { commune } => commune.code_postal()
                     });
 
                     let about_dept = format!("{code_departement}-{dept}");
@@ -76,8 +102,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let quote_dept = vec![quote!(#(#quote_dept),*)];
     let quote_impl_number = vec![quote!(#(#quote_impl_number),*)];
     let quote_impl_commune = vec![quote!(#(#quote_impl_commune),*)];
+    let quote_impl_code_postal = vec![quote!(#(#quote_impl_code_postal),*)];
 
     let q = quote! {
+
+        pub trait CommuneExt {
+            fn code_postal(&self) -> &'static str;
+        }
+
         #[derive(Debug, clap::Subcommand, strum::Display)]
         pub enum Department {
             #(#quote_dept),*
@@ -93,6 +125,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             pub fn commune(&self) -> Box<&dyn std::fmt::Display> {
                 match self {
                     #(#quote_impl_commune),*
+                }
+            }
+
+            pub fn code_postal(&self) -> &'static str {
+                match self {
+                    #(#quote_impl_code_postal),*
                 }
             }
         }
@@ -124,6 +162,8 @@ struct Commune {
     departement: String,
     #[serde(rename = "code_departement")]
     code_departement: String,
+    #[serde(rename = "code_postal")]
+    code_postal: String,
 }
 
 impl Commune {
@@ -133,6 +173,7 @@ impl Commune {
             fullname: Self::sanitize_french(&self.fullname),
             departement: Self::sanitize_french(&self.departement),
             code_departement: self.code_departement,
+            code_postal: self.code_postal,
         }
     }
 
