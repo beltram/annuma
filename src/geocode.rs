@@ -35,8 +35,7 @@ pub async fn find_geocode(
 
     let body = resp
         .json::<geocoding::openstreetmap::OpenstreetmapResponse<f64>>()
-        .await
-        .unwrap();
+        .await?;
 
     let coords = body
         .features

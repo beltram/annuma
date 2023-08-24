@@ -4,10 +4,11 @@ use spinoff::Spinner;
 use std::sync::{Arc, Mutex};
 
 const HOST: &str = "www.annuaire-mairie.fr";
-const PATH: &str = "entreprise-agriculture-sylviculture-peche";
+const PATH1: &str = "entreprise-agriculture-sylviculture-peche";
 
-fn build_uri(commune: &impl std::fmt::Display, departement: u32) -> anyhow::Result<reqwest::Url> {
-    let uri = format!("https://{HOST}/{PATH}-{commune}-{departement}.html");
+fn build_uris(commune: &impl std::fmt::Display, departement: u32) -> anyhow::Result<reqwest::Url> {
+    let commune = heck::AsKebabCase(format!("{commune}")).to_string();
+    let uri = format!("https://{HOST}/{PATH1}-{commune}-{departement}.html");
     Ok(reqwest::Url::parse(&uri)?)
 }
 
@@ -18,7 +19,7 @@ pub async fn find_farmer(
     only_jobs: Option<Vec<Job>>,
     exclude_jobs: Option<Vec<Job>>,
 ) -> anyhow::Result<Vec<Farmer>> {
-    let response = reqwest::get(build_uri(commune, departement_number)?).await?;
+    let response = reqwest::get(build_uris(commune, departement_number)?).await?;
     let html = response.text().await?;
     let farmers = scrap_farmer(html)?;
 
