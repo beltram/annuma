@@ -38,7 +38,8 @@ pub async fn find_farmer(
 
     for f in farmers.iter_mut() {
         let addr = &f.address;
-        f.address = format!("{departement_name}, {commune}, {addr}");
+        // f.address = format!("{departement_name}, {commune}, {addr}");
+        f.address = format!("{addr}, {commune}, {departement_name}");
         // f.address = format!("{addr}");
     }
 

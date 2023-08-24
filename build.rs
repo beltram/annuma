@@ -5,7 +5,7 @@ use std::str::FromStr;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=communes-departement-region.csv");
 
-    let csv_path = "slim-communes-departement-region.csv";
+    let csv_path = "communes-departement-region.csv";
     let dept_out_file = "src/cli/department.rs";
 
     let mut reader = csv::Reader::from_path(csv_path)?;
@@ -53,6 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 c.code_postal.clone(),
                             )
                         })
+                        .unique()
                         .map(|(cn, cp)| {
                             let cn = hygiene(&cn);
                             quote! { Self::#cn => #cp }
@@ -105,6 +106,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let quote_impl_code_postal = vec![quote!(#(#quote_impl_code_postal),*)];
 
     let q = quote! {
+        #![allow(unreachable_patterns)]
+
 
         pub trait CommuneExt {
             fn code_postal(&self) -> &'static str;
