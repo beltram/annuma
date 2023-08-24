@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                     let communes = raw_communes
                         .iter()
-                        .map(|c| heck::AsUpperCamelCase(&c.name).to_string())
+                        .map(|c| heck::AsUpperCamelCase(&c.fullname).to_string())
                         .unique()
                         .map(|name| {
                             let n = hygiene(&name);
@@ -49,7 +49,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .iter()
                         .map(|c| {
                             (
-                                heck::AsUpperCamelCase(&c.name).to_string(),
+                                heck::AsUpperCamelCase(&c.fullname).to_string(),
                                 c.code_postal.clone(),
                             )
                         })
@@ -191,6 +191,7 @@ impl Commune {
                 'û' | 'ü' | 'ù' => "u".to_string(),
                 'ÿ' => "y".to_string(),
                 'ç' => "c".to_string(),
+                '\'' => "-".to_string(),
                 _ => c.to_string(),
             })
             .join("")
